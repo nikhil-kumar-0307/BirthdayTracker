@@ -1,0 +1,52 @@
+﻿@{
+    string userName = User.Identity.Name;
+    string role = User.IsInRole("Admin") ? "Admin" : "Employee";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title - Birthday Tracker</title>
+    <link href="@Url.Content("~/Content/dashboard.css")" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+    <header class="topnav">
+        <a class="brand" href="@Url.Action("Index", "Home")">
+            <span class="brand-ico">🎂</span>
+            <div>
+                <strong>Birthday Tracker</strong>
+                <small>NTPC Kahalgaon</small>
+            </div>
+        </a>
+        <div class="nav-right">
+            <div class="user-chip">
+                <span class="avatar sm">@(string.IsNullOrEmpty(userName) ? "U" : userName.Substring(0, 1).ToUpper())</span>
+                <div>
+                    <b>@userName</b>
+                    <small>@role</small>
+                </div>
+            </div>
+            @Html.ActionLink("Logout", "Logout", "Account", null, new { @class = "btn-logout" })
+        </div>
+    </header>
+
+    <main class="container">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert success">✔ @TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert danger">⚠ @TempData["Error"]</div>
+        }
+
+        @RenderBody()
+    </main>
+
+    <footer class="footer">&copy; @DateTime.Now.Year NTPC Kahalgaon. All rights reserved.</footer>
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>

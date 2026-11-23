@@ -1,31 +1,258 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+﻿@model BirthdayTracker.Models.ViewModels.DashboardViewModel
+@{
+    ViewBag.Title = "Dashboard";
+    Layout = "~/Views/Shared/_AppLayout.cshtml";
+    bool isAdmin = User.IsInRole("Admin");
 }
 
-<div class="jumbotron">
-    <h1>ASP.NET</h1>
-    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-    <p><a href="https://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+<div class="page-head">
+    <div>
+        <h1>Birthday Dashboard</h1>
+        <p>@DateTime.Today.ToString("dddd, dd MMMM yyyy")</p>
+    </div>
+    <div class="head-actions">
+        <a href="#today" class="btn-ghost">Today</a>
+        <a href="#upcoming" class="btn-ghost">Upcoming</a>
+        <a href="#persons" class="btn-ghost">Person Master</a>
+        @if (isAdmin)
+        {
+            <a href="@Url.Action("Create", "PersonMaster")" class="btn-primary">+ Add Person</a>
+        }
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <h2>Getting started</h2>
-        <p>
-            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-            enables a clean separation of concerns and gives you full control over markup
-            for enjoyable, agile development.
-        </p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
+<!-- ========== STAT CARDS ========== -->
+<section class="stats">
+    <div class="stat blue"><div class="stat-ico">⭐</div><div><span>Total Persons</span><b>@Model.TotalPersons</b></div></div>
+    <div class="stat gold"><div class="stat-ico">🎉</div><div><span>Birthdays Today</span><b>@Model.TodayCount</b></div></div>
+    <div class="stat green"><div class="stat-ico">📅</div><div><span>Upcoming (@Model.UpcomingDays days)</span><b>@Model.UpcomingCount</b></div></div>
+    <div class="stat purple"><div class="stat-ico">🗓️</div><div><span>This Month</span><b>@Model.ThisMonthCount</b></div></div>
+    <div class="stat teal"><div class="stat-ico">🏛️</div><div><span>Categories</span><b>@Model.CategoryCount</b></div></div>
+</section>
+
+<!-- ========== TODAY'S BIRTHDAYS ========== -->
+<section class="panel" id="today">
+    <div class="panel-head">
+        <h2>🎉 Today's Birthdays</h2>
+        <span class="count-pill gold">@Model.TodayCount</span>
     </div>
-    <div class="col-md-4">
-        <h2>Get more libraries</h2>
-        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
+
+    @if (Model.TodayBirthdays.Any())
+    {
+        <div class="today-grid">
+            @foreach (var b in Model.TodayBirthdays)
+            {
+                var p = b.Person;
+                <div class="today-card">
+                    <span class="avatar lg">@p.FullName.Substring(0, 1)</span>
+                    <div class="today-info">
+                        <h3>@p.DisplayName</h3>
+                        <p class="role-line"><b>@p.Designation</b>@(string.IsNullOrEmpty(p.Area) ? "" : " · " + p.Area)</p>
+                        <p class="muted">@p.Organization</p>
+                        <div class="chips">
+                            <span class="tag">@p.Category</span>
+                            <span class="tag gold-soft">🎂 Turning @b.TurningAge</span>
+                        </div>
+                        <div class="today-contact">
+                            @if (!string.IsNullOrEmpty(p.MobileNo))
+                            {
+                                <a href="tel:@p.MobileNo">📞 @p.MobileNo</a>
+                            }
+                            @if (!string.IsNullOrEmpty(p.PaName))
+                            {
+                                <span>👤 @p.PaName@(string.IsNullOrEmpty(p.PaMobile) ? "" : " · " + p.PaMobile)</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty">No birthdays today.</div>
+    }
+</section>
+
+<!-- ========== UPCOMING (CATEGORY WISE) ========== -->
+<section class="panel" id="upcoming">
+    <div class="panel-head">
+        <h2>📅 Upcoming Birthdays - Category Wise</h2>
+
+        @using (Html.BeginForm("Index", "Home", FormMethod.Get, new { @class = "inline-form" }))
+        {
+            @Html.Hidden("category", Model.SelectedCategory)
+            @Html.Hidden("search", Model.Search)
+            @Html.Hidden("pageSize", Model.PageSize)
+            <label for="days">Show next</label>
+            <select name="days" id="days" onchange="this.form.submit()">
+                @foreach (var d in new[] { 7, 15, 30, 60, 90 })
+                {
+                    <option value="@d" @(Model.UpcomingDays == d ? "selected" : "")>@d days</option>
+                }
+            </select>
+        }
     </div>
-    <div class="col-md-4">
-        <h2>Web Hosting</h2>
-        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
+
+    @if (Model.UpcomingByCategory.Any())
+    {
+        <div class="section-grid">
+            @foreach (var g in Model.UpcomingByCategory)
+            {
+                <div class="section-card">
+                    <div class="section-card-head">
+                        <h3>@g.Category</h3>
+                        <span class="count-pill">@g.Items.Count</span>
+                    </div>
+                    <ul class="bday-list">
+                        @foreach (var b in g.Items)
+                        {
+                            <li>
+                                <span class="avatar sm">@b.Person.FullName.Substring(0, 1)</span>
+                                <div class="bday-text">
+                                    <b>@b.Person.DisplayName</b>
+                                    <small>@b.Person.Designation@(string.IsNullOrEmpty(b.Person.Area) ? "" : ", " + b.Person.Area)</small>
+                                </div>
+                                <div class="bday-date">
+                                    <b>@b.NextBirthday.ToString("dd MMM")</b>
+                                    <small class="@(b.DaysLeft <= 3 ? "soon" : "")">
+                                        @(b.DaysLeft == 1 ? "Tomorrow" : "in " + b.DaysLeft + " days")
+                                    </small>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty">No upcoming birthdays in the next @Model.UpcomingDays days.</div>
+    }
+</section>
+
+<!-- ========== PERSON MASTER (PAGINATED) ========== -->
+<section class="panel" id="persons">
+    <div class="panel-head">
+        <h2>⭐ Person Master</h2>
+        <span class="count-pill">@Model.TotalFiltered</span>
     </div>
-</div>
+
+    <form method="get" action="@Url.Action("Index", "Home")#persons" class="filter-bar">
+        <input type="hidden" name="days" value="@Model.UpcomingDays" />
+        <input type="hidden" name="page" value="1" />
+        <input type="text" name="search" value="@Model.Search" placeholder="Search name, designation, office, district, email, mobile..." />
+        <select name="category">
+            <option value="">All Categories</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c" @(Model.SelectedCategory == c ? "selected" : "")>@c</option>
+            }
+        </select>
+        <select name="pageSize" title="Rows per page" onchange="this.form.submit()">
+            @foreach (var s in new[] { 10, 25, 50, 100 })
+            {
+                <option value="@s" @(Model.PageSize == s ? "selected" : "")>@s / page</option>
+            }
+        </select>
+        <button type="submit" class="btn-primary">Search</button>
+        <a href="@Url.Action("Index", "Home")#persons" class="btn-ghost">Reset</a>
+    </form>
+
+    <div class="table-wrap">
+        <table class="data-table compact">
+            <thead>
+                <tr>
+                    <th class="w-num">#</th>
+                    <th>Person</th>
+                    <th>Category</th>
+                    <th>Office / Area</th>
+                    <th>Date of Birth</th>
+                    <th>Contact</th>
+                    <th>PA / Contact Person</th>
+                    @if (isAdmin)
+                    {
+                        <th>Actions</th>
+}
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Persons.Any())
+                {
+                    int i = Model.FromRecord;
+                    foreach (var p in Model.Persons)
+                    {
+                        bool isToday = p.DateOfBirth.Month == DateTime.Today.Month && p.DateOfBirth.Day == DateTime.Today.Day;
+                        <tr class="@(isToday ? "row-today" : "")">
+                            <td class="w-num">@(i++)</td>
+                            <td>
+                                <div class="name-cell">
+                                    <span class="avatar sm">@p.FullName.Substring(0, 1)</span>
+                                    <div class="stack">
+                                        <b>@p.DisplayName @if (isToday)
+                                        {<span class="tag gold">🎂 Today</span>}</b>
+                                        <small>@p.Designation</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="tag">@p.Category</span></td>
+                            <td>
+                                <div class="stack">
+                                    <span>@p.Organization</span>
+                                    <small>@p.Area</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="stack">
+                                    <span>@p.DateOfBirth.ToString("dd MMM yyyy")</span>
+                                    <small>@p.Age years</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="stack">
+                                    <span>@p.MobileNo</span>
+                                    @if (!string.IsNullOrEmpty(p.Email))
+                                    {
+                                        <small><a href="mailto:@p.Email">@p.Email</a></small>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(p.PaName))
+                                {
+                                    <div class="stack">
+                                        <span>@p.PaName</span>
+                                        <small>@p.PaMobile</small>
+                                    </div>
+                                }
+                                else
+                                { <span class="muted">-</span>}
+                            </td>
+                            @if (isAdmin)
+                            {
+                                <td class="actions">
+                                    <a href="@Url.Action("Edit", "PersonMaster", new { id = p.Id })" class="btn-sm">Edit</a>
+                                    @using (Html.BeginForm("Delete", "PersonMaster", new { id = p.Id }, FormMethod.Post, new { @class = "inline-del", onsubmit = "return confirm('Delete this record?');" }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-sm danger">Delete</button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="8" class="empty">No records found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-footer">
+        <span class="muted">Showing <b>@Model.FromRecord</b> to <b>@Model.ToRecord</b> of <b>@Model.TotalFiltered</b> records</span>
+        @Html.Partial("_Pager", Model)
+    </div>
+</section>

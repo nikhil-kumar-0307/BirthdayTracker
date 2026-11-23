@@ -1,0 +1,127 @@
+﻿@model BirthdayTracker.Models.DTOs.LoginDto
+@{
+    Layout = null;
+    bool isAdmin = Model != null && Model.LoginAs == "Admin";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign in - Birthday Tracker</title>
+    <link href="@Url.Content("~/Content/login.css")" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="top-bar"></div>
+
+    <div class="page">
+        <div class="card">
+
+            <!-- LEFT PANEL -->
+            <div class="left">
+                <div class="badge">Birthday Portal</div>
+                <h1>Birthday Tracker<br />Management System</h1>
+                <p class="desc">One place to record, review and remember the birthdays of important persons for the station.</p>
+
+                <div class="features">
+                    <div class="feature">
+                        <div class="ico">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3" /><path d="M8 2v4M16 2v4M3 10h18M9 15l2 2 4-4" /></svg>
+                        </div>
+                        <div><b>Today's birthdays</b><span>See who is celebrating today</span></div>
+                    </div>
+                    <div class="feature">
+                        <div class="ico">
+                            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6" /><circle cx="17" cy="9" r="2.5" /><path d="M17.5 14c2.5 0 4 1.8 4 4.5" /></svg>
+                        </div>
+                        <div><b>Category wise</b><span>Upcoming birthdays by category</span></div>
+                    </div>
+                    <div class="feature">
+                        <div class="ico">
+                            <svg viewBox="0 0 24 24"><path d="M8 20V12M12 20V6M16 20v-5" /></svg>
+                        </div>
+                        <div><b>Person Master</b><span>Complete contact details in one place</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div class="right">
+                <h2>Sign in</h2>
+                <p class="sub">Use your credentials to continue.</p>
+
+                @using (Html.BeginForm("Login", "Account", new { returnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { id = "loginForm" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.LoginAs, new { id = "LoginAs" })
+
+                    <div class="tabs">
+                        <button type="button" class="tab @(!isAdmin ? "active" : "")" data-role="Employee">Employee</button>
+                        <button type="button" class="tab @(isAdmin ? "active" : "")" data-role="Admin">Admin</button>
+                    </div>
+
+                    if (ViewData.ModelState[""] != null && ViewData.ModelState[""].Errors.Count > 0)
+                    {
+                        <div class="alert-error">
+                            @Html.ValidationSummary(true)
+                        </div>
+                    }
+
+                    <div class="field">
+                        <label class="lbl" for="EmployeeNumber">Employee No</label>
+                        <div class="input-wrap">
+                            <svg class="left-ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" /></svg>
+                            @Html.TextBoxFor(m => m.EmployeeNumber, new { autocomplete = "off", autofocus = "autofocus" })
+                        </div>
+                        @Html.ValidationMessageFor(m => m.EmployeeNumber, "", new { @class = "field-error" })
+                    </div>
+
+                    <div class="field no-margin">
+                        <label class="lbl" for="Password">Password</label>
+                        <div class="input-wrap">
+                            <svg class="left-ico" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+                            @Html.PasswordFor(m => m.Password)
+                            <button type="button" class="eye" id="togglePwd" aria-label="Show or hide password">
+                                <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                            </button>
+                        </div>
+                        @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-error" })
+                        <div class="hint">Enter the password given to you by the administrator.</div>
+                    </div>
+
+                    <div class="row">
+                        <label>
+                            @Html.CheckBoxFor(m => m.RememberMe) Keep me signed in on this computer
+                        </label>
+                        <a href="#">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="btn">Sign in</button>
+
+                    <div class="divider">Authorized users only</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">&copy; @DateTime.Now.Year NTPC Kahalgaon. All rights reserved.</div>
+
+    <script>
+        var tabs = document.querySelectorAll('.tab');
+        var loginAs = document.getElementById('LoginAs');
+        tabs.forEach(function (t) {
+            t.addEventListener('click', function () {
+                tabs.forEach(function (x) { x.classList.remove('active'); });
+                t.classList.add('active');
+                loginAs.value = t.getAttribute('data-role');
+            });
+        });
+
+        document.getElementById('togglePwd').addEventListener('click', function () {
+            var p = document.getElementById('Password');
+            p.type = p.type === 'password' ? 'text' : 'password';
+        });
+    </script>
+</body>
+</html>

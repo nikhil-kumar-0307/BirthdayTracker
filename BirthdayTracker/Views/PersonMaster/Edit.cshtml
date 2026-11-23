@@ -1,0 +1,30 @@
+﻿@model BirthdayTracker.Models.PersonMaster
+@{
+    ViewBag.Title = "Edit Person";
+    Layout = "~/Views/Shared/_AppLayout.cshtml";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Edit Person</h1>
+        <p>@Model.DisplayName</p>
+    </div>
+    <a href="@Url.Action("Index", "Home")" class="btn-ghost">← Back to Dashboard</a>
+</div>
+
+<section class="panel">
+    @using (Html.BeginForm("Edit", "PersonMaster", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        @Html.ValidationSummary(true, "", new { @class = "alert danger" })
+        @Html.HiddenFor(m => m.Id)
+        @Html.HiddenFor(m => m.IsActive)
+
+        @Html.Partial("_Form", Model)
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Update</button>
+            <a href="@Url.Action("Index", "Home")" class="btn-ghost">Cancel</a>
+        </div>
+    }
+</section>

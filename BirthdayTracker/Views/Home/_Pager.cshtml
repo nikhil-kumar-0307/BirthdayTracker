@@ -1,0 +1,69 @@
+﻿@model BirthdayTracker.Models.ViewModels.DashboardViewModel
+@{
+    Func<int, string> pageUrl = p => Url.Action("Index", "Home", new
+    {
+        page = p,
+        pageSize = Model.PageSize,
+        search = Model.Search,
+        category = Model.SelectedCategory,
+        days = Model.UpcomingDays
+    }) + "#persons";
+
+    int cur = Model.Page;
+    int last = Model.TotalPages;
+    int start = Math.Max(1, cur - 2);
+    int end = Math.Min(last, cur + 2);
+}
+
+@if (last > 1)
+{
+    <nav class="pager" aria-label="Pagination">
+        @if (cur > 1)
+        {
+            <a href="@pageUrl(1)" title="First">«</a>
+            <a href="@pageUrl(cur - 1)">‹ Prev</a>
+        }
+        else
+        {
+            <span class="disabled">«</span>
+            <span class="disabled">‹ Prev</span>
+        }
+
+        @if (start > 1)
+        {
+            <a href="@pageUrl(1)">1</a>
+            if (start > 2)
+            { <span class="dots">…</span>}
+        }
+
+        @for (int p = start; p <= end; p++)
+        {
+            if (p == cur)
+            {
+                <span class="current">@p</span>
+            }
+            else
+            {
+                <a href="@pageUrl(p)">@p</a>
+            }
+        }
+
+        @if (end < last)
+        {
+            if (end < last - 1)
+            {<span class="dots">…</span> }
+            <a href="@pageUrl(last)">@last</a>
+        }
+
+        @if (cur < last)
+        {
+            <a href="@pageUrl(cur + 1)">Next ›</a>
+            <a href="@pageUrl(last)" title="Last">»</a>
+        }
+        else
+        {
+            <span class="disabled">Next ›</span>
+            <span class="disabled">»</span>
+        }
+    </nav>
+}
